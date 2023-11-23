@@ -25,22 +25,6 @@ pub trait OptionFetcher<T> {
     fn fetch(&self, input: &str, offset: usize, amount: usize) -> (Vec<T>, usize);
 }
 
-pub struct StaticOptionFetcher<T>(pub Vec<T>);
-
-impl<T: Clone> OptionFetcher<T> for StaticOptionFetcher<T> {
-    fn fetch(&self, input: &str, offset: usize, amount: usize) -> (Vec<T>, usize) {
-        let lower_index = offset.max(0);
-        let upper_index = (offset + amount).min(self.0.len());
-        (
-            (&self.0[lower_index..upper_index])
-                .iter()
-                .cloned()
-                .collect(),
-            self.0.len(),
-        )
-    }
-}
-
 pub struct CustomSelectPrompt<'a, T> {
     message: &'a str,
     config: CustomSelectConfig,

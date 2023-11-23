@@ -20,7 +20,7 @@ use crate::{
 };
 
 use self::prompt::CustomSelectPrompt;
-pub use self::prompt::{OptionFetcher, StaticOptionFetcher};
+pub use self::prompt::OptionFetcher;
 
 #[cfg(feature = "fuzzy")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
