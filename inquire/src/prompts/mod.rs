@@ -1,5 +1,6 @@
 mod action;
 mod confirm;
+mod custom_select;
 mod custom_type;
 #[cfg(feature = "date")]
 mod dateselect;
@@ -14,6 +15,7 @@ mod text;
 
 pub use action::*;
 pub use confirm::*;
+pub use custom_select::*;
 pub use custom_type::*;
 #[cfg(feature = "date")]
 pub use dateselect::*;
