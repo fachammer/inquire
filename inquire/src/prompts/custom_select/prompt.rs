@@ -57,32 +57,17 @@ where
     T: Display + 'static,
 {
     pub fn new(so: CustomSelect<'a, T>) -> InquireResult<Self> {
-        let (fetched_options, total_amount) = so.options_fetcher.fetch("", 0, so.page_size);
-        if fetched_options.is_empty() {
-            return Err(InquireError::InvalidConfiguration(
-                "Available options can not be empty".into(),
-            ));
-        }
-
-        if so.starting_cursor >= fetched_options.len() {
-            return Err(InquireError::InvalidConfiguration(format!(
-                "Starting cursor index {} is out-of-bounds for length {} of options",
-                so.starting_cursor,
-                &fetched_options.len()
-            )));
-        }
-
         Ok(Self {
             message: so.message,
             config: CustomSelectConfig {
                 vim_mode: so.vim_mode,
                 page_size: so.page_size,
             },
-            fetched_options,
+            fetched_options: vec![],
             window: Window {
                 offset: so.starting_cursor,
                 window_length: so.page_size,
-                total_length: total_amount,
+                total_length: 0,
                 cursor_index: so.starting_cursor,
             },
             options_fetcher: so.options_fetcher,
@@ -96,6 +81,10 @@ where
     }
 
     fn move_cursor_up(&mut self, qty: usize, wrap: bool) -> ActionResult {
+        if self.window.total_length == 0 {
+            return ActionResult::Clean;
+        }
+
         let qty = qty % self.window.total_length;
         let new_index =
             (self.window.cursor_index + self.window.total_length - qty) % self.window.total_length;
@@ -103,14 +92,26 @@ where
     }
 
     fn move_cursor_down(&mut self, qty: usize, wrap: bool) -> ActionResult {
+        if self.window.total_length == 0 {
+            return ActionResult::Clean;
+        }
+
         let new_index = (self.window.cursor_index + qty) % self.window.total_length;
         self.update_cursor_position(new_index)
     }
 
     fn update_cursor_position(&mut self, new_position: usize) -> ActionResult {
         if new_position != self.window.cursor_index {
-            self.window.offset = new_position;
             self.window.cursor_index = new_position;
+            self.window.offset = self
+                .window
+                .cursor_index
+                .min(
+                    self.window
+                        .total_length
+                        .saturating_sub(self.window.window_length),
+                )
+                .min(new_position.saturating_sub(self.window.window_length / 2));
             ActionResult::NeedsRedraw
         } else {
             ActionResult::Clean
@@ -151,7 +152,8 @@ where
             self.window
                 .cursor_index
                 .max(self.window.offset)
-                .min(self.window.offset + self.window.window_length),
+                .min(self.window.offset + self.window.window_length)
+                .min(self.window.total_length.saturating_sub(1)),
         );
     }
 }
@@ -233,8 +235,8 @@ where
             .map(|(i, el)| ListOption::new(self.window.offset + i, el))
             .collect();
         let page = Page {
-            first: true,
-            last: true,
+            first: self.window.offset == 0,
+            last: self.window.offset + self.window.window_length >= self.window.total_length,
             content: &options,
             cursor: Some(self.fetched_index_from_cursor_index()),
             total: self.window.total_length,
