@@ -74,7 +74,7 @@ pub struct CustomSelect<'a, T> {
     /// Message to be presented to the user.
     pub message: &'a str,
 
-    /// Options displayed to the user.
+    /// Fetcher that returns the options to display.
     pub options_fetcher: Box<dyn OptionFetcher<T>>,
 
     /// Help message to be presented to the user.
