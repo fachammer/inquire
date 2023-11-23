@@ -133,11 +133,11 @@ where
         self.window.total_length = total_length;
 
         self.update_cursor_position(
-            self.window
-                .cursor_index
-                .max(self.window.offset)
-                .min(self.window.offset + self.window.window_length)
-                .min(self.window.total_length.saturating_sub(1)),
+            self.window.cursor_index.clamp(
+                self.window.offset,
+                (self.window.offset + self.window.window_length)
+                    .min(self.window.total_length.saturating_sub(1)),
+            ),
         );
     }
 }
